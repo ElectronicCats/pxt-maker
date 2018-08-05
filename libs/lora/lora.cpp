@@ -1,6 +1,6 @@
 // Copyright (c) Andres Sabas. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
-// Based in the work of Sandeep Mistry, thanks
+// Based in the work of Sandeep Mistry, thanks https://github.com/sandeepmistry/arduino-LoRa
 
 #include "pxt.h"
 #include "SPI.h"
@@ -67,11 +67,6 @@ typedef uint8_t byte;
 #define bitWrite(value, bit, bitvalue) (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
 
 namespace lora {
-
-class WLora{
-  public:
-  CODAL_SPI lora;
-
   long _frequency = 915E6;
   int _packetIndex;
   int _implicitHeaderMode;
@@ -85,14 +80,10 @@ class WLora{
   float packetSnr();
   long packetFrequencyError();
 
-  virtual size_t write(uint8_t byte);
-  virtual size_t write(const uint8_t *buffer, size_t size);
-  
-  virtual int available();
-  virtual int read();
-  virtual int peek();
-  virtual void flush();
-
+  int available();
+  int read();
+  int peek();
+  void flush();
   void idle();
   void sleep();
 
@@ -116,8 +107,15 @@ class WLora{
 
   void setLdoFlag();
 
+  int write(uint8_t byte);
+  int write(const uint8_t *buffer, size_t size);
+
   uint8_t readRegister(uint8_t address);
   void writeRegister(uint8_t address, uint8_t value);
+
+class WLora{
+  public:
+  CODAL_SPI lora;
 
   WLora()
         : lora(*LOOKUP_PIN(MOSI), *LOOKUP_PIN(MISO), *LOOKUP_PIN(SCK))
@@ -169,7 +167,7 @@ SINGLETON(WLora);
 /*
 * Write Register of SX. 
 */
-void WLora::writeRegister(uint8_t address, uint8_t value)
+void writeRegister(uint8_t address, uint8_t value)
 {
   
   auto p = LOOKUP_PIN(D7);
@@ -185,7 +183,7 @@ void WLora::writeRegister(uint8_t address, uint8_t value)
 /*
 * Read register of SX 
 */
-uint8_t WLora::readRegister(uint8_t address)
+uint8_t readRegister(uint8_t address)
 {
   uint8_t response;
   auto s = getWLora();
@@ -200,21 +198,20 @@ uint8_t WLora::readRegister(uint8_t address)
   return response;
 }
 
-void WLora::explicitHeaderMode()
+void explicitHeaderMode()
 {
   _implicitHeaderMode = 0;
-
   writeRegister(REG_MODEM_CONFIG_1, readRegister(REG_MODEM_CONFIG_1) & 0xfe);
 }
 
-void WLora::implicitHeaderMode()
+void implicitHeaderMode()
 {
   _implicitHeaderMode = 1;
 
   writeRegister(REG_MODEM_CONFIG_1, readRegister(REG_MODEM_CONFIG_1) | 0x01);
 }
 
-int WLora::beginPacket(int implicitHeader)
+int beginPacket(int implicitHeader)
 {
   // put in standby mode
   idle();
@@ -232,14 +229,7 @@ int WLora::beginPacket(int implicitHeader)
   return 1;
 }
 
-/** Begin Packet.**/
-//%
-int beginPacket(int implicitHeader)
-{
-  return beginPacket(implicitHeader);
-}
-
-int WLora::endPacket()
+int endPacket()
 {
   // put in TX mode
   writeRegister(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_TX);
@@ -256,7 +246,7 @@ int WLora::endPacket()
   return 1;
 }
 
-int WLora::parsePacket(int size)
+int parsePacket(int size)
 {
   int packetLength = 0;
   int irqFlags = readRegister(REG_IRQ_FLAGS);
@@ -301,17 +291,17 @@ int WLora::parsePacket(int size)
   return packetLength;
 }
 
-int WLora::packetRssi()
+int packetRssi()
 {
   return (readRegister(REG_PKT_RSSI_VALUE) - (_frequency < 868E6 ? 164 : 157));
 }
 
-float WLora::packetSnr()
+float packetSnr()
 {
   return ((int8_t)readRegister(REG_PKT_SNR_VALUE)) * 0.25;
 }
 
-long WLora::packetFrequencyError()
+long packetFrequencyError()
 {
   int32_t freqError = 0;
   freqError = static_cast<int32_t>(readRegister(REG_FREQ_ERROR_MSB) & 0xb111); //TODO Covert B111 to c++
@@ -330,12 +320,12 @@ long WLora::packetFrequencyError()
   return static_cast<long>(fError);
 }
 
-size_t WLora::write(uint8_t byte)
+int write(uint8_t byte)
 {
   return write(&byte, sizeof(byte));
 }
 
-size_t WLora::write(const uint8_t *buffer, size_t size)
+int write(const uint8_t *buffer, size_t size)
 {
   int currentLength = readRegister(REG_PAYLOAD_LENGTH);
 
@@ -355,12 +345,12 @@ size_t WLora::write(const uint8_t *buffer, size_t size)
   return size;
 }
 
-int WLora::available()
+int available()
 {
   return (readRegister(REG_RX_NB_BYTES) - _packetIndex);
 }
 
-int WLora::read()
+int read()
 {
   if (!available()) {
     return -1;
@@ -371,7 +361,7 @@ int WLora::read()
   return readRegister(REG_FIFO);
 }
 
-int WLora::peek()
+int peek()
 {
   if (!available()) {
     return -1;
@@ -389,21 +379,21 @@ int WLora::peek()
   return b;
 }
 
-void WLora::flush()
+void flush()
 {
 }
 
-void WLora::idle()
+void idle()
 {
   writeRegister(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_STDBY);
 }
 
-void WLora::sleep()
+void sleep()
 {
   writeRegister(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_SLEEP);
 }
 
-void WLora::setTxPower(int level, int outputPin)
+void setTxPower(int level, int outputPin)
 {
   if (PA_OUTPUT_RFO_PIN == outputPin) {
     // RFO
@@ -426,7 +416,7 @@ void WLora::setTxPower(int level, int outputPin)
   }
 }
 
-void WLora::setFrequency(long frequency)
+void setFrequency(long frequency)
 {
   _frequency = frequency;
 
@@ -437,12 +427,12 @@ void WLora::setFrequency(long frequency)
   writeRegister(REG_FRF_LSB, (uint8_t)(frf >> 0));
 }
 
-int WLora::getSpreadingFactor()
+int getSpreadingFactor()
 {
   return readRegister(REG_MODEM_CONFIG_2) >> 4;
 }
 
-void WLora::setSpreadingFactor(int sf)
+void setSpreadingFactor(int sf)
 {
   if (sf < 6) {
     sf = 6;
@@ -462,7 +452,7 @@ void WLora::setSpreadingFactor(int sf)
   setLdoFlag();
 }
 
-long WLora::getSignalBandwidth()
+long getSignalBandwidth()
 {
   byte bw = (readRegister(REG_MODEM_CONFIG_1) >> 4);
   switch (bw) {
@@ -479,7 +469,7 @@ long WLora::getSignalBandwidth()
   }
 }
 
-void WLora::setSignalBandwidth(long sbw)
+void setSignalBandwidth(long sbw)
 {
   int bw;
 
@@ -509,7 +499,7 @@ void WLora::setSignalBandwidth(long sbw)
   setLdoFlag();
 }
 
-void WLora::setLdoFlag()
+void setLdoFlag()
 {
   // Section 4.1.1.5
   long symbolDuration = 1000 / ( getSignalBandwidth() / (1L << getSpreadingFactor()) ) ;
@@ -522,7 +512,7 @@ void WLora::setLdoFlag()
   writeRegister(REG_MODEM_CONFIG_3, config3);
 }
 
-void WLora::setCodingRate4(int denominator)
+void setCodingRate4(int denominator)
 {
   if (denominator < 5) {
     denominator = 5;
@@ -535,28 +525,28 @@ void WLora::setCodingRate4(int denominator)
   writeRegister(REG_MODEM_CONFIG_1, (readRegister(REG_MODEM_CONFIG_1) & 0xf1) | (cr << 1));
 }
 
-void WLora::setPreambleLength(long length)
+void setPreambleLength(long length)
 {
   writeRegister(REG_PREAMBLE_MSB, (uint8_t)(length >> 8));
   writeRegister(REG_PREAMBLE_LSB, (uint8_t)(length >> 0));
 }
 
-void WLora::setSyncWord(int sw)
+void setSyncWord(int sw)
 {
   writeRegister(REG_SYNC_WORD, sw);
 }
 
-void WLora::enableCrc()
+void enableCrc()
 {
   writeRegister(REG_MODEM_CONFIG_2, readRegister(REG_MODEM_CONFIG_2) | 0x04);
 }
 
-void WLora::disableCrc()
+void disableCrc()
 {
   writeRegister(REG_MODEM_CONFIG_2, readRegister(REG_MODEM_CONFIG_2) & 0xfb);
 }
 
-byte WLora::random()
+byte random()
 {
   return readRegister(REG_RSSI_WIDEBAND);
 }
