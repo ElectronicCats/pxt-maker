@@ -212,6 +212,12 @@ void implicitHeaderMode()
   writeRegister(REG_MODEM_CONFIG_1, readRegister(REG_MODEM_CONFIG_1) | 0x01);
 }
 
+/**
+* Begin Packet to send
+**/
+//% parts="lora"
+//% weight=45 blockGap=8 blockId="beginPacket" block="beginPacket"
+int beginPacket()
 {
   // put in standby mode
   idle();
@@ -229,6 +235,11 @@ void implicitHeaderMode()
   return 1;
 }
 
+/**
+* End Packet to send
+**/
+//% parts="lora"
+//% weight=45 blockGap=8 blockId="endPacket" block="endPacket"
 int endPacket()
 {
   // put in TX mode
@@ -246,6 +257,11 @@ int endPacket()
   return 1;
 }
 
+/**
+* Parse Packet to send
+**/
+//% parts="lora"
+//% weight=45 blockGap=8 blockId="parsePacket" block="parsePacket"
 int parsePacket(int size)
 {
   int packetLength = 0;
@@ -291,16 +307,27 @@ int parsePacket(int size)
   return packetLength;
 }
 
+/**
+* Packet RSSI
+**/
+//% parts="lora"
+//% weight=45 blockGap=8 blockId="packetRssi" block="packetRssi"
 int packetRssi()
 {
   return (readRegister(REG_PKT_RSSI_VALUE) - (_frequency < 868E6 ? 164 : 157));
 }
 
+/**
+* Packet SNR
+**/
 float packetSnr()
 {
   return ((int8_t)readRegister(REG_PKT_SNR_VALUE)) * 0.25;
 }
 
+/**
+* Begin Packet Frecuency Error
+**/
 long packetFrequencyError()
 {
   int32_t freqError = 0;
@@ -320,6 +347,9 @@ long packetFrequencyError()
   return static_cast<long>(fError);
 }
 
+/**
+* Write Packet to send
+**/
 int write(uint8_t byte)
 {
   return write(&byte, sizeof(byte));
@@ -345,11 +375,21 @@ int write(const uint8_t *buffer, size_t size)
   return size;
 }
 
+/**
+* Available Packet
+**/
+//% parts="lora"
+//% weight=45 blockGap=8 blockId="available" block="available"
 int available()
 {
   return (readRegister(REG_RX_NB_BYTES) - _packetIndex);
 }
 
+/**
+* Read Packet
+**/
+//% parts="lora"
+//% weight=45 blockGap=8 blockId="read" block="read"
 int read()
 {
   if (!available()) {
@@ -361,6 +401,9 @@ int read()
   return readRegister(REG_FIFO);
 }
 
+/**
+* Peek Packet to send
+**/
 int peek()
 {
   if (!available()) {
@@ -388,13 +431,20 @@ void idle()
   writeRegister(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_STDBY);
 }
 
+/**
+* Sleep Mode
+**/
 void sleep()
 {
   writeRegister(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_SLEEP);
 }
 
+/**
+* Set Tx Power
+**/
 void setTxPower(int level, int outputPin)
 {
+
   if (PA_OUTPUT_RFO_PIN == outputPin) {
     // RFO
     if (level < 0) {
@@ -416,6 +466,9 @@ void setTxPower(int level, int outputPin)
   }
 }
 
+/**
+* Set Frecuency of LoRa
+**/
 void setFrequency(long frequency)
 {
   _frequency = frequency;
@@ -427,6 +480,9 @@ void setFrequency(long frequency)
   writeRegister(REG_FRF_LSB, (uint8_t)(frf >> 0));
 }
 
+/**
+* Get Spreading Factor of LoRa
+**/
 int getSpreadingFactor()
 {
   return readRegister(REG_MODEM_CONFIG_2) >> 4;
@@ -452,6 +508,9 @@ void setSpreadingFactor(int sf)
   setLdoFlag();
 }
 
+/**
+* Get Signal Bandwidth of LoRa
+**/
 long getSignalBandwidth()
 {
   byte bw = (readRegister(REG_MODEM_CONFIG_1) >> 4);
@@ -469,6 +528,9 @@ long getSignalBandwidth()
   }
 }
 
+/**
+* Set Signal Bandwidth of LoRa
+**/
 void setSignalBandwidth(long sbw)
 {
   int bw;
