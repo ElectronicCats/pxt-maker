@@ -68,10 +68,11 @@ typedef uint8_t byte;
 
 namespace lora {
   long _frequency = 915E6;
-  int _packetIndex;
-  int _implicitHeaderMode;
+  int _packetIndex = 0;
+  int _implicitHeaderMode =0;
+  int implicitHeader = false;
   
-  int beginPacket(int implicitHeader = false);
+  int beginPacket();
   
   int endPacket();
 
@@ -211,7 +212,6 @@ void implicitHeaderMode()
   writeRegister(REG_MODEM_CONFIG_1, readRegister(REG_MODEM_CONFIG_1) | 0x01);
 }
 
-int beginPacket(int implicitHeader)
 {
   // put in standby mode
   idle();
