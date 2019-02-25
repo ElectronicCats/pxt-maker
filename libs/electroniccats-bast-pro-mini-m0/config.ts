@@ -29,4 +29,6 @@ namespace config {
     export const PIN_SCK = DAL.PA17;
     export const PIN_SCL = DAL.PA09;
     export const PIN_SDA = DAL.PA08;
+
+    export const PIN_JACK_TX = DAL.PA00; //D0
 }
