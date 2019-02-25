@@ -1,6 +1,6 @@
 {
     "name": "electroniccats-bast-pro-mini-m0",
-    "description": "Support for Electronic Cats Bast Pro Mini M0",
+    "description": "Support for Electronic Cats Bast Pro Mini M0 - beta",
     "files": [
         "README.md",
         "device.d.ts",
