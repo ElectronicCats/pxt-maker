@@ -7,21 +7,27 @@
         "config.ts",
         "ns.ts",
         "board.json",
-        "board.svg",
-        "boardwireframe.svg"
+        "board.svg"
     ],
     "core": true,
     "dependencies": {
-        "core": "file:../core",
+        "core---samd": "file:../core---samd",
         "buttons": "file:../buttons",
+        "light": "file:../light",
+        "accelerometer": "file:../accelerometer",
+        "mixer---samd": "file:../mixer---samd",
         "touch": "file:../touch",
         "pixel": "file:../pixel",
+        "serial": "file:../serial",
+        "jacdac": "file:../jacdac",
         "storage": "file:../storage"
     },
     "public": true,
+    "compileServiceVariant": "samd21",
     "weight": 100,
     "features": [
         "uf2",
+        "pixel",
         "pinled",
         "pind0",
         "pind1",
@@ -31,6 +37,11 @@
         "buttond1",
         "toucha0",
         "toucha1",
-        "storage"
+        "storage",
+        "light",
+        "screen",
+        "jacdac",
+        "music",
+        "accelerometer"
     ]
 }
