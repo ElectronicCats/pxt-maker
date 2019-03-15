@@ -1,0 +1,23 @@
+{
+    "name": "electroniccats-catwan-usb-stick",
+    "description": "The Electronic Cats CatWAN USB Stick",
+    "files": [
+        "README.md",
+        "device.d.ts",
+        "config.ts",
+        "ns.ts",
+        "board.json"
+    ],
+    "dependencies": {
+        "core---samd": "file:../core---samd",
+        "lora": "file:../lora"
+    },
+    "core": true,
+    "public": true,
+    "compileServiceVariant": "samd21",
+    "features": [
+        "uf2",
+        "pinled",
+        "lora"
+    ]
+}
